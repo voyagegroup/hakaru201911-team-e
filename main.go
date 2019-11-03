@@ -15,13 +15,13 @@ func main() {
 	if dataSourceName == "" {
 		dataSourceName = "root:password@tcp(127.0.0.1:13306)/hakaru"
 	}
+	db, err := sql.Open("mysql", dataSourceName)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
 
 	hakaruHandler := func(w http.ResponseWriter, r *http.Request) {
-		db, err := sql.Open("mysql", dataSourceName)
-		if err != nil {
-			panic(err.Error())
-		}
-		defer db.Close()
 
 		stmt, e := db.Prepare("INSERT INTO eventlog(at, name, value) values(NOW(), ?, ?)")
 		if e != nil {
