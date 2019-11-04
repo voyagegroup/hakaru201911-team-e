@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	db.SetMaxOpenConns(40)
+	db.SetMaxOpenConns(10)
 		stmt, e := db.Prepare("INSERT INTO eventlog(at, name, value) values(NOW(), ?, ?)")
 		if e != nil {
 			panic(e.Error())
