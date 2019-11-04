@@ -76,18 +76,6 @@ func main() {
 
 		q <- eventlog{Name: name, Value: value, At: time.Now().In(jst)}
 
-		stmt, e := db.Prepare("INSERT INTO eventlog(at, name, value) values(NOW(), ?, ?)")
-		if e != nil {
-			panic(e.Error())
-		}
-
-		defer stmt.Close()
-
-		_, e = stmt.Exec(name, value)
-		if e != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
 		origin := r.Header.Get("Origin")
 		if origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
