@@ -42,12 +42,15 @@ func bulkInsert(q chan eventlog, db *sql.DB) {
 			// insert
 			for i := 0; i < len(valueStrings)/num + 1; i++ {
 				var stmt string
+				var argnum int
 				if (i+1)*num >= len(valueStrings) {
 					stmt = fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings[i*num:], ","))
+					argnum = len(valueStrings[i*num:])
 				} else {
 					stmt = fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings[i*num:(i+1)*num], ","))
+					argnum = len(valueStrings[i*num:(i+1)*num])
 				}
-				_, e := db.Exec(stmt, valueArgs...)
+				_, e := db.Exec(stmt, valueArgs[i*num*3:(i*num*3)+argnum*3]...)
 				if e != nil {
 					panic(e.Error())
 				}
