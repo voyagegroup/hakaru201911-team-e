@@ -40,7 +40,7 @@ func bulkInsert(q chan eventlog, db *sql.DB) {
 				continue
 			}
 			// insert
-			for i := 0; i < len(valueStrings)/num; i++ {
+			for i := 0; i < len(valueStrings)/num + 1; i++ {
 				var stmt string
 				if (i+1)*num >= len(valueStrings) {
 					stmt = fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings[i*num:], ","))
