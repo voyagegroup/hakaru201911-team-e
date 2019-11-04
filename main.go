@@ -19,6 +19,7 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+	db.SetMaxOpenConns()
 	defer db.Close()
 
 	hakaruHandler := func(w http.ResponseWriter, r *http.Request) {
