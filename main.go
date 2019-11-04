@@ -1,8 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"log"
+	"net/http"
+	"strings"
+	"time"
+	"fmt"
 
 	"database/sql"
 
@@ -10,6 +13,43 @@ import (
 	"os"
 )
 
+type eventlog struct {
+	At    time.Time
+	Name  string
+	Value string
+}
+
+
+func bulkInsert(q chan eventlog, db *sql.DB) {
+	valueStrings := []string{}
+	valueArgs := [](interface{}){}
+	for {
+		select {
+		case eventlog, ok := <-q:
+			if ok {
+				valueStrings = append(valueStrings, "(?, ?, ?)")
+				valueArgs = append(valueArgs, eventlog.At)
+				valueArgs = append(valueArgs, eventlog.Name)
+				valueArgs = append(valueArgs, eventlog.Value)
+			} else {
+				panic("channel is closed")
+			}
+		case <-time.After(1 * time.Second):
+			if len(valueStrings) == 0 {
+				continue
+			}
+			// insert
+			stmt := fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings, ","))
+			_, e := db.Exec(stmt, valueArgs...)
+			if e != nil {
+				panic(e.Error())
+			}
+			valueStrings = []string{}
+			valueArgs = [](interface{}){}
+		}
+	}
+
+}
 func main() {
 	dataSourceName := os.Getenv("HAKARU_DATASOURCENAME")
 	if dataSourceName == "" {
@@ -22,7 +62,19 @@ func main() {
 	db.SetMaxOpenConns(40)
 	defer db.Close()
 
+	q := make(chan eventlog, 100000)
+	jst, e := time.LoadLocation("Asia/Tokyo")
+	if e != nil {
+		panic(e.Error())
+	}
+
+	bulkInsert(q, db)
+
 	hakaruHandler := func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		value := r.URL.Query().Get("value")
+
+		q <- eventlog{Name: name, Value: value, At: time.Now().In(jst)}
 
 		stmt, e := db.Prepare("INSERT INTO eventlog(at, name, value) values(NOW(), ?, ?)")
 		if e != nil {
@@ -30,9 +82,6 @@ func main() {
 		}
 
 		defer stmt.Close()
-
-		name := r.URL.Query().Get("name")
-		value := r.URL.Query().Get("value")
 
 		_, e = stmt.Exec(name, value)
 		if e != nil {
