@@ -68,7 +68,7 @@ func main() {
 		panic(e.Error())
 	}
 
-	bulkInsert(q, db)
+	go bulkInsert(q, db)
 
 	hakaruHandler := func(w http.ResponseWriter, r *http.Request) {
 		name := r.URL.Query().Get("name")
