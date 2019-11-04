@@ -48,7 +48,7 @@ mysql_run:
 
 artifacts.tgz: provisioning/instance
 	$(MAKE) build GOOS=linux GOARCH=amd64
-	tar czf artifacts.tgz hakaru db provisioning/instance
+	tar czf artifacts.tgz hakaru provisioning/instance main.go
 
 ARTIFACTS_BUCKET := $(AWS_PROFILE)-hakaru-artifacts
 
