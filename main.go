@@ -23,6 +23,7 @@ type eventlog struct {
 func bulkInsert(q chan eventlog, db *sql.DB) {
 	valueStrings := []string{}
 	valueArgs := [](interface{}){}
+	num := 100
 	for {
 		select {
 		case eventlog, ok := <-q:
@@ -39,10 +40,17 @@ func bulkInsert(q chan eventlog, db *sql.DB) {
 				continue
 			}
 			// insert
-			stmt := fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings, ","))
-			_, e := db.Exec(stmt, valueArgs...)
-			if e != nil {
-				panic(e.Error())
+			for i := 0; i < len(valueStrings)/num; i++ {
+				var stmt string
+				if (i+1)*num >= len(valueStrings) {
+					stmt = fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings[i*num:], ","))
+				} else {
+					stmt = fmt.Sprintf("INSERT INTO eventlog(at, name, value) VALUES %s", strings.Join(valueStrings[i*num:(i+1)*num], ","))
+				}
+				_, e := db.Exec(stmt, valueArgs...)
+				if e != nil {
+					panic(e.Error())
+				}
 			}
 			valueStrings = []string{}
 			valueArgs = [](interface{}){}
