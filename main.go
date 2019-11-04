@@ -34,7 +34,10 @@ func main() {
 		name := r.URL.Query().Get("name")
 		value := r.URL.Query().Get("value")
 
-		_, _ = stmt.Exec(name, value)
+		_, e = stmt.Exec(name, value)
+		if e != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
 		origin := r.Header.Get("Origin")
 		if origin != "" {
